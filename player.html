@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -9,6 +10,9 @@
         :root {
             --accent-color: #ff3e3e;
             --panel-bg: rgba(20, 20, 20, 0.65); 
+            --controls-width: min(90%, 900px);
+            --vid-brightness: 1;
+            --vid-contrast: 1;
         }
 
         body, html {
@@ -39,6 +43,7 @@
             /* 優化：啟動硬體加速 */
             will-change: transform;
             backface-visibility: hidden;
+            filter: brightness(var(--vid-brightness)) contrast(var(--vid-contrast));
         }
 
         #imgDisplay { display: none; }
@@ -64,7 +69,7 @@
             bottom: var(--controls-bottom, 10px);
             left: var(--controls-left, 50%);
             transform: translateX(-50%);
-            width: 90%; max-width: 900px;
+            width: var(--controls-width);
             background: var(--panel-bg);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             padding: 12px 20px; border-radius: 20px;
@@ -80,17 +85,81 @@
         }
 
         #bottom-controls.dragging { cursor: grabbing; transition: opacity 0.3s ease, visibility 0.3s ease; }
+
+        /* 寬度調整把手 */
+        .resize-handle {
+            position: absolute;
+            top: 8px; bottom: 8px;
+            width: 16px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: ew-resize;
+            z-index: 5;
+            touch-action: none;
+        }
+        .resize-handle.left { left: -8px; }
+        .resize-handle.right { right: -8px; }
+        .resize-handle::after {
+            content: '';
+            width: 4px; height: 32px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
+            transition: background 0.2s ease;
+        }
+        .resize-handle:hover::after,
+        .resize-handle.active::after { background: var(--accent-color); }
+
+        /* 亮度 / 對比度調整面板、更多選項面板 共用樣式 */
+        .popup-panel {
+            position: fixed;
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 16px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; gap: 14px;
+            z-index: 1002;
+            opacity: 0; visibility: hidden;
+            transform: translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+        }
+        .popup-panel.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        #adjust-panel { width: 240px; }
+        .adjust-row { display: flex; flex-direction: column; gap: 6px; }
+        .adjust-row-header { display: flex; justify-content: space-between; font-size: 13px; color: #ccc; }
+        .adjust-row input[type="range"] { width: 100%; accent-color: var(--accent-color); }
+        .adjust-actions { display: flex; justify-content: flex-end; }
+        .adjust-actions button {
+            font-size: 13px; background: rgba(255,255,255,0.08);
+            padding: 6px 14px; border-radius: 10px;
+        }
+        .adjust-actions button:hover { background: rgba(255,255,255,0.18); }
+
+        /* 寬度不足時收合的「更多選項」上拉選單 */
+        #overflow-panel { width: 230px; gap: 4px; }
+        .overflow-row {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 2px;
+            border-radius: 10px;
+        }
+        .overflow-row.active { display: flex; }
+        .overflow-row .row-label { font-size: 13px; color: #ccc; min-width: 64px; flex-shrink: 0; }
+        .overflow-row button { padding: 6px; }
+        #btnMore { display: none; }
+        #btnMore.visible { display: flex; }
         body.show-ui #bottom-controls { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
         .progress-wrapper { display: flex; align-items: center; gap: 15px; }
         #progressRange { flex-grow: 1; height: 5px; cursor: pointer; accent-color: var(--accent-color); }
-        .tools-wrapper { display: flex; align-items: center; justify-content: space-between; }
-        .btn-group { display: flex; align-items: center; gap: 8px; }
-        button { background: transparent; color: white; border: none; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 12px; transition: 0.2s; }
+        .tools-wrapper { display: flex; align-items: center; justify-content: space-between; min-width: 0; overflow: hidden; }
+        .btn-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        button { background: transparent; color: white; border: none; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 12px; transition: 0.2s; flex-shrink: 0; }
         button:hover { background: rgba(255,255,255,0.1); }
         .time-text { font-size: 16px; font-family: 'Consolas', monospace; color: #aaa; }
-        #volumeSlider { width: 90px; height: 6px; accent-color: #fff; cursor: pointer; }
-        .vol-text { font-size: 14px; font-family: 'Consolas', monospace; min-width: 35px; color: #fff; }
-        .zoom-badge { background: var(--accent-color); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        #volumeSlider { width: 90px; height: 6px; accent-color: #fff; cursor: pointer; flex-shrink: 0; }
+        .vol-text { font-size: 14px; font-family: 'Consolas', monospace; min-width: 35px; color: #fff; flex-shrink: 0; }
+        .zoom-badge { background: var(--accent-color); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; flex-shrink: 0; }
         
         #drop-zone {
             position: fixed; inset: 0; 
@@ -134,6 +203,9 @@
             visibility: visible;
             transform: scale(1);
         }
+        #row-vol .row-label {
+            min-width: 8px;
+        }
     </style>
 </head>
 <body class="show-ui">
@@ -151,8 +223,34 @@
         <img id="imgDisplay">
     </div>
 
+    <!-- 亮度 / 對比度調整面板 -->
+    <div id="adjust-panel" class="popup-panel">
+        <div class="adjust-row">
+            <div class="adjust-row-header"><span>亮度</span><span id="brightnessVal">100%</span></div>
+            <input type="range" id="brightnessSlider" min="50" max="150" value="100">
+        </div>
+        <div class="adjust-row">
+            <div class="adjust-row-header"><span>對比度</span><span id="contrastVal">100%</span></div>
+            <input type="range" id="contrastSlider" min="50" max="150" value="100">
+        </div>
+        <div class="adjust-actions">
+            <button id="btnAdjustReset">重設</button>
+        </div>
+    </div>
+
+    <!-- 寬度不足時，被收合的功能會移入此上拉選單 -->
+    <div id="overflow-panel" class="popup-panel">
+        <div class="overflow-row" id="row-vol"><span class="row-label">音量</span></div>
+        <div class="overflow-row" id="row-zoom"><span class="row-label">縮放比例</span></div>
+        <div class="overflow-row" id="row-reset"><span class="row-label">重設畫面</span></div>
+        <div class="overflow-row" id="row-rotate"><span class="row-label">旋轉</span></div>
+        <div class="overflow-row" id="row-adjust"><span class="row-label">亮度/對比</span></div>
+    </div>
+
     <!-- 底部控制面板 -->
     <div id="bottom-controls">
+        <div class="resize-handle left" id="resizeLeft" title="拖曳調整寬度"></div>
+        <div class="resize-handle right" id="resizeRight" title="拖曳調整寬度"></div>
         <div class="progress-wrapper">
             <span class="time-text" id="curTime">00:00</span>
             <input type="range" id="progressRange" min="0" max="100" value="0">
@@ -165,18 +263,24 @@
                 <button id="btnPrev" title="倒退 10 秒"><span class="material-icons">replay_10</span></button>
                 <button id="btnPlay" title="播放/暫停"><span class="material-icons" id="iconPlay">play_arrow</span></button>
                 <button id="btnNext" title="快進 10 秒"><span class="material-icons">forward_10</span></button>
-                
-                <div class="btn-group" style="margin-left:10px">
+                <span id="anchor-vol" style="display:none"></span>
+                <div class="btn-group" id="volGroup" style="margin-left:10px">
                     <button id="btnMute" title="靜音"><span class="material-icons" id="iconVol">volume_up</span></button>
                     <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1">
                     <span class="vol-text" id="volNum">100%</span>
                 </div>
             </div>
             <div class="btn-group">
+                <span id="anchor-zoom" style="display:none"></span>
                 <span class="zoom-badge" id="zoomVal" title="當前縮放比例">1.0X</span>
+                <span id="anchor-adjust" style="display:none"></span>
+                <button id="btnAdjust" title="亮度 / 對比度調整"><span class="material-icons">tune</span></button>
+                <span id="anchor-reset" style="display:none"></span>
                 <button id="btnReset" title="重設畫面位置與縮放"><span class="material-icons">center_focus_strong</span></button>
+                <span id="anchor-rotate" style="display:none"></span>
                 <button id="btnRotate" title="旋轉 90 度"><span class="material-icons">rotate_right</span></button>
                 <button id="btnFullscreen" title="全螢幕 (快速鍵: F)"><span class="material-icons" style="font-size: 28px;">fullscreen</span></button>
+                <button id="btnMore" title="更多選項"><span class="material-icons">more_horiz</span></button>
             </div>
         </div>
     </div>
@@ -208,12 +312,25 @@
         const iconToggleUI = document.getElementById('iconToggleUI');
         const btnFloatingToggle = document.getElementById('btn-floating-toggle');
         const bottomControls = document.getElementById('bottom-controls');
+        const adjustPanel = document.getElementById('adjust-panel');
+        const btnAdjust = document.getElementById('btnAdjust');
+        const brightnessSlider = document.getElementById('brightnessSlider');
+        const contrastSlider = document.getElementById('contrastSlider');
+        const brightnessVal = document.getElementById('brightnessVal');
+        const contrastVal = document.getElementById('contrastVal');
+        const btnAdjustReset = document.getElementById('btnAdjustReset');
+        const resizeLeft = document.getElementById('resizeLeft');
+        const resizeRight = document.getElementById('resizeRight');
+        const toolsWrapper = document.querySelector('.tools-wrapper');
+        const overflowPanel = document.getElementById('overflow-panel');
+        const btnMore = document.getElementById('btnMore');
 
         let scale = 1, px = 0, py = 0, rotation = 0, isDrag = false, sx, sy, moveCount = 0;
         let longPressTimer, rewindInterval, isLongPress = false;
         let isSeek = false, startX, startY, userMutedState = false;
         let activePointerId = null, longPressSide = null, savedPlaybackRate = 1, wasPlayingBeforeLongPress = false;
         let isControlsDrag = false, controlsDragStartX = 0, controlsDragStartY = 0, controlsStartLeft = 0, controlsStartBottom = 0;
+        let isResizing = false, resizeSide = null, resizeStartX = 0, resizeStartWidth = 0;
         
         // 用於安全處理 HTML5 Video 播放與暫停非同步行為的變數
         let playPromise = null;
@@ -355,7 +472,7 @@
         }
 
         container.addEventListener('pointerdown', (e) => {
-            if (activePointerId !== null || e.target.closest('#bottom-controls, #btn-floating-toggle')) return;
+            if (activePointerId !== null || e.target.closest('#bottom-controls, #btn-floating-toggle, #adjust-panel')) return;
             activePointerId = e.pointerId;
             moveCount = 0; isLongPress = false;
             startX = e.clientX; startY = e.clientY;
@@ -402,7 +519,7 @@
         }
 
         bottomControls.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('button, input')) return;
+            if (e.target.closest('button, input, .resize-handle')) return;
             e.preventDefault();
             e.stopPropagation();
             const rect = bottomControls.getBoundingClientRect();
@@ -424,6 +541,7 @@
             );
             bottomControls.style.setProperty('--controls-left', `${next.left}px`);
             bottomControls.style.setProperty('--controls-bottom', `${next.bottom}px`);
+            repositionOpenPopups();
         });
 
         function endControlsDrag() {
@@ -433,6 +551,149 @@
 
         bottomControls.addEventListener('pointerup', endControlsDrag);
         bottomControls.addEventListener('pointercancel', endControlsDrag);
+
+        /* ---- 控制面板寬度調整 ---- */
+        function startResize(side) {
+            return (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                isResizing = true;
+                resizeSide = side;
+                resizeStartX = e.clientX;
+                resizeStartWidth = bottomControls.getBoundingClientRect().width;
+                bottomControls.classList.add('dragging');
+                e.target.classList.add('active');
+                e.target.setPointerCapture?.(e.pointerId);
+            };
+        }
+
+        resizeLeft.addEventListener('pointerdown', startResize('left'));
+        resizeRight.addEventListener('pointerdown', startResize('right'));
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isResizing) return;
+            e.preventDefault();
+            const dx = e.clientX - resizeStartX;
+            // 面板以中心點定位，拖動任一側把手時寬度以兩倍變化量調整，符合視覺上邊緣跟隨游標的效果
+            const rawWidth = resizeSide === 'right'
+                ? resizeStartWidth + dx * 2
+                : resizeStartWidth - dx * 2;
+            const minWidth = 320;
+            const maxWidth = window.innerWidth - 20;
+            const newWidth = Math.min(Math.max(rawWidth, minWidth), maxWidth);
+            bottomControls.style.setProperty('--controls-width', `${newWidth}px`);
+
+            const rect = bottomControls.getBoundingClientRect();
+            const currentBottom = window.innerHeight - rect.bottom;
+            const clamped = clampControlsPosition(rect.left + rect.width / 2, currentBottom);
+            bottomControls.style.setProperty('--controls-left', `${clamped.left}px`);
+            bottomControls.style.setProperty('--controls-bottom', `${clamped.bottom}px`);
+            repositionOpenPopups();
+        });
+
+        function endResize() {
+            if (!isResizing) return;
+            isResizing = false;
+            resizeSide = null;
+            bottomControls.classList.remove('dragging');
+            resizeLeft.classList.remove('active');
+            resizeRight.classList.remove('active');
+        }
+        window.addEventListener('pointerup', endResize);
+        window.addEventListener('pointercancel', endResize);
+
+        /* ---- 通用彈出面板（亮度面板 / 更多選項面板 共用） ---- */
+        function positionPopup(panel) {
+            const rect = bottomControls.getBoundingClientRect();
+            const panelRect = panel.getBoundingClientRect();
+            let left = rect.left + rect.width / 2 - panelRect.width / 2;
+            left = Math.min(Math.max(8, left), window.innerWidth - panelRect.width - 8);
+            let top = rect.top - panelRect.height - 12;
+            if (top < 8) top = Math.min(rect.bottom + 12, window.innerHeight - panelRect.height - 8);
+            panel.style.left = `${left}px`;
+            panel.style.top = `${top}px`;
+        }
+
+        function closeAllPopups(except) {
+            [adjustPanel, overflowPanel].forEach(p => { if (p !== except) p.classList.remove('show'); });
+        }
+
+        function togglePopup(panel) {
+            const willShow = !panel.classList.contains('show');
+            closeAllPopups(willShow ? panel : null);
+            if (willShow) {
+                panel.classList.add('show');
+                positionPopup(panel);
+            } else {
+                panel.classList.remove('show');
+            }
+        }
+
+        function repositionOpenPopups() {
+            if (adjustPanel.classList.contains('show')) positionPopup(adjustPanel);
+            if (overflowPanel.classList.contains('show')) positionPopup(overflowPanel);
+        }
+
+        function applyImageFilter() {
+            document.documentElement.style.setProperty('--vid-brightness', brightnessSlider.value / 100);
+            document.documentElement.style.setProperty('--vid-contrast', contrastSlider.value / 100);
+            brightnessVal.textContent = `${brightnessSlider.value}%`;
+            contrastVal.textContent = `${contrastSlider.value}%`;
+        }
+        brightnessSlider.oninput = applyImageFilter;
+        contrastSlider.oninput = applyImageFilter;
+        btnAdjustReset.onclick = (e) => {
+            e.stopPropagation();
+            brightnessSlider.value = 100;
+            contrastSlider.value = 100;
+            applyImageFilter();
+        };
+
+        btnAdjust.onclick = (e) => { e.stopPropagation(); togglePopup(adjustPanel); };
+        btnMore.onclick = (e) => { e.stopPropagation(); togglePopup(overflowPanel); };
+
+        window.addEventListener('pointerdown', (e) => {
+            if (adjustPanel.classList.contains('show') && !e.target.closest('#adjust-panel, #btnAdjust')) {
+                adjustPanel.classList.remove('show');
+            }
+            if (overflowPanel.classList.contains('show') && !e.target.closest('#overflow-panel, #btnMore')) {
+                overflowPanel.classList.remove('show');
+            }
+        });
+
+        /* ---- 寬度不足時，自動將次要功能收進「更多選項」上拉選單 ---- */
+        const collapseSlots = [
+            { id: 'vol',    anchor: document.getElementById('anchor-vol'),    el: document.getElementById('volGroup'), row: document.getElementById('row-vol') },
+            { id: 'zoom',   anchor: document.getElementById('anchor-zoom'),   el: document.getElementById('zoomVal'),  row: document.getElementById('row-zoom') },
+            { id: 'reset',  anchor: document.getElementById('anchor-reset'), el: btnReset,  row: document.getElementById('row-reset') },
+            { id: 'rotate', anchor: document.getElementById('anchor-rotate'),el: btnRotate, row: document.getElementById('row-rotate') },
+            { id: 'adjust', anchor: document.getElementById('anchor-adjust'),el: btnAdjust, row: document.getElementById('row-adjust') },
+        ];
+
+        function restoreSlot(slot) {
+            slot.anchor.after(slot.el);
+            slot.row.classList.remove('active');
+        }
+        function collapseSlot(slot) {
+            slot.row.appendChild(slot.el);
+            slot.row.classList.add('active');
+        }
+
+        function relayoutControls() {
+            // 先全部還原，重新量測，再依優先順序收合，避免狀態累積錯誤
+            collapseSlots.forEach(restoreSlot);
+            for (const slot of collapseSlots) {
+                if (toolsWrapper.scrollWidth <= toolsWrapper.clientWidth) break;
+                collapseSlot(slot);
+            }
+            const hasOverflow = collapseSlots.some(s => s.row.classList.contains('active'));
+            btnMore.classList.toggle('visible', hasOverflow);
+            if (!hasOverflow) overflowPanel.classList.remove('show');
+            repositionOpenPopups();
+        }
+
+        const controlsResizeObserver = new ResizeObserver(() => relayoutControls());
+        controlsResizeObserver.observe(bottomControls);
 
         container.addEventListener('click', () => { 
             if (!isLongPress && moveCount < 5 && v.style.display !== 'none') togglePlay(); 
@@ -539,11 +800,17 @@
         window.addEventListener('resize', () => {
             containerW = container.clientWidth;
             containerH = container.clientHeight;
+            const maxWidth = window.innerWidth - 20;
+            const currentWidth = bottomControls.getBoundingClientRect().width;
+            if (currentWidth > maxWidth) {
+                bottomControls.style.setProperty('--controls-width', `${maxWidth}px`);
+            }
             const rect = bottomControls.getBoundingClientRect();
             const currentBottom = window.innerHeight - rect.bottom;
             const next = clampControlsPosition(rect.left + rect.width / 2, currentBottom);
             bottomControls.style.setProperty('--controls-left', `${next.left}px`);
             bottomControls.style.setProperty('--controls-bottom', `${next.bottom}px`);
+            repositionOpenPopups();
             update();
         });
     </script>
